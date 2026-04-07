@@ -598,13 +598,18 @@
       pointer-events: none;
     }
 
-    .rte-editor ul, .rte-editor ol {
-      padding-left: 20px;
+    .rte-editor ul, .rte-editor ol,
+    .flag-text ul, .flag-text ol {
+      padding-left: 22px;
       margin: 4px 0;
     }
 
-    .rte-editor b, .rte-editor strong { font-weight: 700; }
-    .rte-editor i, .rte-editor em { font-style: italic; }
+    .rte-editor li, .flag-text li { margin: 2px 0; }
+
+    .rte-editor b, .rte-editor strong,
+    .flag-text b, .flag-text strong { font-weight: 700; color: inherit; }
+    .rte-editor i, .rte-editor em,
+    .flag-text i, .flag-text em { font-style: italic; color: inherit; }
   </style>
 </head>
 <body>
@@ -768,8 +773,9 @@
 
       allClients.forEach((client, idx) => {
         const latest = client.checkins[0];
-        const lastDate = latest ? new Date(latest.submittedAt) : null;
-        const isOverdue = !lastDate || lastDate < cutoff7;
+        const lastDate = latest?.submittedAt ? new Date(latest.submittedAt) : null;
+        const validDate = lastDate && !isNaN(lastDate);
+        const isOverdue = !validDate || lastDate < cutoff7;
         if (isOverdue) overdueCount++;
 
         const tr = document.createElement('tr');
@@ -778,7 +784,7 @@
         tr.addEventListener('click', () => showClient(idx));
 
         const weekEndingDisplay = formatDate(latest?.weekEnding) || '—';
-        const lastDateStr = lastDate
+        const lastDateStr = validDate
           ? lastDate.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })
           : 'No submissions';
 
