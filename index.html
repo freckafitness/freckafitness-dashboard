@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Frecka Fitness — Coach Dashboard</title>
+
+  <style>
+    @font-face {
+      font-family: 'Halyard Display';
+      src: url('Fonts/Halyard Display.otf') format('opentype');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    :root {
+      --navy:        #253551;
+      --off-white:   #e0e0db;
+      --warm-white:  #eaeae6;
+      --accent:      #c8a96e;
+      --accent-dark: #a8893e;
+      --mid-grey:    #6a7080;
+      --light-grey:  #d0d0cb;
+      --border:      #c8c8c2;
+      --error:       #c0392b;
+
+      --sor-1: #5cb85c;
+      --sor-2: #e8c855;
+      --sor-3: #e8902a;
+      --sor-4: #d44444;
+
+      --perf-1: #d44444;
+      --perf-2: #9da8b8;
+      --perf-3: #7ab87a;
+      --perf-4: #3d9c3d;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Halyard Display', system-ui, sans-serif;
+      background: var(--off-white);
+      color: var(--navy);
+      min-height: 100vh;
+    }
+
+    /* ── Top bar ─────────────────────────────────────────────────── */
+
+    .topbar {
+      background: var(--navy);
+      color: var(--off-white);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 0 28px;
+      height: 60px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .topbar img {
+      height: 32px;
+      filter: brightness(0) invert(1);
+    }
+
+    .topbar-title {
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: var(--off-white);
+      flex: 1;
+    }
+
+    .topbar-sub {
+      font-size: 13px;
+      color: rgba(224,224,219,0.55);
+    }
+
+    /* ── Content wrapper ─────────────────────────────────────────── */
+
+    .content {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 32px 24px 64px;
+    }
+
+    /* ── Loading / error states ──────────────────────────────────── */
+
+    .state-msg {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--mid-grey);
+      font-size: 16px;
+    }
+
+    .state-msg.error { color: var(--error); }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid var(--light-grey);
+      border-top-color: var(--navy);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Section header ──────────────────────────────────────────── */
+
+    .section-header {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .section-header h1 {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--navy);
+    }
+
+    .section-header .subtitle {
+      font-size: 14px;
+      color: var(--mid-grey);
+    }
+
+    /* ── Roster table ────────────────────────────────────────────── */
+
+    .roster-wrap {
+      overflow-x: auto;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 12px rgba(37,53,81,0.07);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      font-size: 14px;
+    }
+
+    thead th {
+      background: var(--navy);
+      color: var(--off-white);
+      text-align: left;
+      padding: 12px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--light-grey);
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+
+    tbody tr:hover { background: var(--warm-white); }
+
+    tbody tr.overdue {
+      background: #fff8ed;
+    }
+
+    tbody tr.overdue:hover { background: #fff3d8; }
+
+    td {
+      padding: 13px 16px;
+      vertical-align: middle;
+    }
+
+    .client-name {
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    .client-email {
+      font-size: 12px;
+      color: var(--mid-grey);
+      margin-top: 2px;
+    }
+
+    .overdue-badge {
+      display: inline-block;
+      background: #f59e0b;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 8px;
+      vertical-align: middle;
+      text-transform: uppercase;
+    }
+
+    .week-date {
+      font-size: 13px;
+      color: var(--mid-grey);
+    }
+
+    /* Rating pill */
+    .rating-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .rating-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* Performance badge */
+    .perf-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    /* Soreness badge */
+    .sor-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      color: #fff;
+    }
+
+    .sor-1 { background: var(--sor-1); }
+    .sor-2 { background: var(--sor-2); color: var(--navy); }
+    .sor-3 { background: var(--sor-3); }
+    .sor-4 { background: var(--sor-4); }
+    .sor-0 { background: var(--light-grey); color: var(--mid-grey); }
+
+    .for-ryan-snippet {
+      font-size: 12px;
+      color: var(--mid-grey);
+      max-width: 220px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .for-ryan-snippet.has-note {
+      color: var(--navy);
+      font-style: italic;
+    }
+
+    /* Nutrition score */
+    .nutr-score {
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    /* ── Back button ─────────────────────────────────────────────── */
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: none;
+      border: 1.5px solid var(--border);
+      border-radius: 7px;
+      padding: 7px 14px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--navy);
+      cursor: pointer;
+      transition: background 0.14s, border-color 0.14s;
+      margin-bottom: 24px;
+    }
+
+    .back-btn:hover {
+      background: var(--warm-white);
+      border-color: var(--navy);
+    }
+
+    /* ── Client header ───────────────────────────────────────────── */
+
+    .client-header {
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+
+    .client-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .client-header .checkin-count {
+      font-size: 14px;
+      color: var(--mid-grey);
+    }
+
+    /* ── Snapshot card ───────────────────────────────────────────── */
+
+    .snapshot-card {
+      background: var(--navy);
+      color: var(--off-white);
+      border-radius: 12px;
+      padding: 24px 28px;
+      margin-bottom: 32px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 20px 32px;
+    }
+
+    .snapshot-field label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(224,224,219,0.55);
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .snapshot-field .value {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .snapshot-field .sub {
+      font-size: 12px;
+      color: rgba(224,224,219,0.6);
+      margin-top: 2px;
+    }
+
+    /* ── Charts grid ─────────────────────────────────────────────── */
+
+    .charts-section-label {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--mid-grey);
+      margin-bottom: 14px;
+    }
+
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    @media (max-width: 680px) {
+      .charts-grid { grid-template-columns: 1fr; }
+    }
+
+    .chart-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 20px 12px;
+      box-shadow: 0 1px 6px rgba(37,53,81,0.05);
+    }
+
+    .chart-title {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--mid-grey);
+      margin-bottom: 12px;
+    }
+
+    .chart-card canvas { max-height: 160px; }
+
+    /* ── Flags panel ─────────────────────────────────────────────── */
+
+    .flags-section-label {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--mid-grey);
+      margin-bottom: 14px;
+    }
+
+    .flags-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 14px;
+    }
+
+    .flag-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 18px;
+      box-shadow: 0 1px 6px rgba(37,53,81,0.05);
+    }
+
+    .flag-card.alert {
+      border-left: 4px solid var(--sor-4);
+      background: #fff5f5;
+    }
+
+    .flag-card-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--mid-grey);
+      margin-bottom: 10px;
+    }
+
+    .flag-card.alert .flag-card-title { color: var(--sor-4); }
+
+    .flag-entry {
+      display: flex;
+      gap: 10px;
+      padding: 7px 0;
+      border-bottom: 1px solid var(--light-grey);
+      font-size: 13px;
+    }
+
+    .flag-entry:last-child { border-bottom: none; padding-bottom: 0; }
+
+    .flag-week {
+      font-size: 11px;
+      color: var(--mid-grey);
+      white-space: nowrap;
+      flex-shrink: 0;
+      padding-top: 1px;
+    }
+
+    .flag-text { color: var(--navy); line-height: 1.4; }
+
+    .flag-empty {
+      font-size: 13px;
+      color: var(--mid-grey);
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <img src="https://images.squarespace-cdn.com/content/v1/644b57e54a9e990e2527d950/40f650b7-c12e-40bf-8222-9e424110d63e/frecka-010.png"
+         alt="Frecka Fitness" />
+    <span class="topbar-title">Coach Dashboard</span>
+    <span class="topbar-sub" id="last-updated"></span>
+  </div>
+
+  <div class="content">
+
+    <!-- ── Roster view ──────────────────────────────────────────── -->
+    <div id="roster-view">
+      <div id="roster-loading" class="state-msg">
+        <div class="spinner"></div>
+        Loading client data…
+      </div>
+      <div id="roster-error" class="state-msg error" style="display:none;">
+        Could not load data. Check the SCRIPT_URL and that the Apps Script is deployed as a web app.
+      </div>
+      <div id="roster-content" style="display:none;">
+        <div class="section-header">
+          <h1>All Clients</h1>
+          <span class="subtitle" id="roster-subtitle"></span>
+        </div>
+        <div class="roster-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Client</th>
+                <th>Last Check-In</th>
+                <th>Overall</th>
+                <th>Performance</th>
+                <th>Soreness</th>
+                <th>Nutrition</th>
+                <th>For Ryan</th>
+              </tr>
+            </thead>
+            <tbody id="roster-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Per-client view ──────────────────────────────────────── -->
+    <div id="client-view" style="display:none;">
+      <button class="back-btn" id="back-btn">← All Clients</button>
+
+      <div class="client-header">
+        <h1 id="client-name"></h1>
+        <span class="checkin-count" id="client-count"></span>
+      </div>
+
+      <!-- Latest snapshot -->
+      <div class="snapshot-card" id="snapshot-card"></div>
+
+      <!-- Trend charts -->
+      <div class="charts-section-label">Trends over time</div>
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-title">Overall Week Rating</div>
+          <canvas id="chart-rating"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Nutrition Score</div>
+          <canvas id="chart-nutrition"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Performance Felt</div>
+          <canvas id="chart-performance"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Soreness / Pain</div>
+          <canvas id="chart-soreness"></canvas>
+        </div>
+      </div>
+
+      <!-- Flags -->
+      <div class="flags-section-label">Flags &amp; Notes</div>
+      <div class="flags-grid" id="flags-grid"></div>
+    </div>
+
+  </div>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+  <script>
+    // ── Config ─────────────────────────────────────────────────────
+    // Paste your Apps Script /exec URL here (same URL used by the checkin form)
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyUsaukOm4ZMF365CyveDJn8B1dje2jhUlStuuk2udo_WJkcjcrUBxtLc88ir3kB0Ej/exec';
+
+    // ── Label maps ─────────────────────────────────────────────────
+    const PERF_LABELS = {
+      0: '—',
+      1: 'Noticeably down',
+      2: 'About the same',
+      3: 'Slightly better',
+      4: 'Significantly better'
+    };
+
+    const PERF_SHORT = { 0: '—', 1: '↓ Down', 2: '→ Same', 3: '↑ Better', 4: '↑↑ Much better' };
+
+    const SOR_LABELS = {
+      0: '—',
+      1: 'Clear',
+      2: 'Minor',
+      3: 'Persistent',
+      4: 'Pain'
+    };
+
+    const SOR_FULL = {
+      0: '—',
+      1: 'Nothing to Flag',
+      2: 'Minor Soreness',
+      3: 'Persistent Soreness / Tightness',
+      4: 'Pain — Needs Attention'
+    };
+
+    // ── State ──────────────────────────────────────────────────────
+    let allClients = [];
+    let chartInstances = {};
+
+    // ── Init ───────────────────────────────────────────────────────
+    fetchData();
+
+    async function fetchData() {
+      try {
+        const res  = await fetch(SCRIPT_URL, { redirect: 'follow' });
+        const json = await res.json();
+
+        if (json.error) throw new Error(json.error);
+        allClients = json.clients || [];
+
+        renderRoster();
+      } catch (err) {
+        document.getElementById('roster-loading').style.display = 'none';
+        document.getElementById('roster-error').style.display = '';
+        console.error(err);
+      }
+    }
+
+    // ── Roster ─────────────────────────────────────────────────────
+    function renderRoster() {
+      document.getElementById('roster-loading').style.display = 'none';
+      document.getElementById('roster-content').style.display = '';
+
+      const now = new Date();
+      const cutoff7 = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+      let overdueCount = 0;
+      const tbody = document.getElementById('roster-body');
+      tbody.innerHTML = '';
+
+      allClients.forEach((client, idx) => {
+        const latest = client.checkins[0];
+        const lastDate = latest ? new Date(latest.submittedAt) : null;
+        const isOverdue = !lastDate || lastDate < cutoff7;
+        if (isOverdue) overdueCount++;
+
+        const tr = document.createElement('tr');
+        if (isOverdue) tr.classList.add('overdue');
+        tr.dataset.idx = idx;
+        tr.addEventListener('click', () => showClient(idx));
+
+        const weekEndingDisplay = latest?.weekEnding || '—';
+        const lastDateStr = lastDate
+          ? lastDate.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })
+          : 'No submissions';
+
+        const ratingColor = ratingToColor(latest?.weekRating || 0);
+        const sorClass    = `sor-${latest?.soreness || 0}`;
+        const sorLabel    = SOR_LABELS[latest?.soreness || 0] || '—';
+        const perfN       = latest?.progressTrend || 0;
+        const nutr        = latest?.nutritionAdherence || 0;
+        const forRyan     = latest?.forRyan || '';
+
+        tr.innerHTML = `
+          <td>
+            <div class="client-name">
+              ${esc(client.firstName)} ${esc(client.lastName)}
+              ${isOverdue ? '<span class="overdue-badge">Overdue</span>' : ''}
+            </div>
+            <div class="client-email">${esc(client.email)}</div>
+          </td>
+          <td>
+            <div>${lastDateStr}</div>
+            <div class="week-date">Week ending ${esc(weekEndingDisplay)}</div>
+          </td>
+          <td>
+            ${latest?.weekRating
+              ? `<span class="rating-pill">
+                   <span class="rating-dot" style="background:${ratingColor}"></span>
+                   ${latest.weekRating}<small style="font-weight:400;font-size:12px;">/10</small>
+                 </span>`
+              : '<span style="color:var(--mid-grey)">—</span>'
+            }
+          </td>
+          <td>
+            ${perfN > 0
+              ? `<span class="perf-badge" style="background:${perfColor(perfN)}20;color:${perfColor(perfN)};">${PERF_SHORT[perfN]}</span>`
+              : '<span style="color:var(--mid-grey)">—</span>'
+            }
+          </td>
+          <td><span class="sor-badge ${sorClass}">${sorLabel}</span></td>
+          <td>
+            ${nutr > 0
+              ? `<span class="nutr-score" style="color:${nutritionColor(nutr)}">${nutr}<small style="font-weight:400;font-size:12px;color:var(--mid-grey)">/10</small></span>`
+              : '<span style="color:var(--mid-grey)">—</span>'
+            }
+          </td>
+          <td>
+            <div class="for-ryan-snippet ${forRyan ? 'has-note' : ''}">${forRyan ? esc(forRyan) : '—'}</div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      const total = allClients.length;
+      document.getElementById('roster-subtitle').textContent =
+        `${total} client${total !== 1 ? 's' : ''}${overdueCount > 0 ? ` · ${overdueCount} overdue` : ''}`;
+
+      const now2 = new Date();
+      document.getElementById('last-updated').textContent =
+        'Updated ' + now2.toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    // ── Per-client view ────────────────────────────────────────────
+    function showClient(idx) {
+      const client = allClients[idx];
+      document.getElementById('roster-view').style.display = 'none';
+      document.getElementById('client-view').style.display = '';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      document.getElementById('client-name').textContent = `${client.firstName} ${client.lastName}`;
+      document.getElementById('client-count').textContent =
+        `${client.checkins.length} check-in${client.checkins.length !== 1 ? 's' : ''}`;
+
+      renderSnapshot(client.checkins[0]);
+      renderCharts(client.checkins);
+      renderFlags(client.checkins);
+    }
+
+    document.getElementById('back-btn').addEventListener('click', () => {
+      destroyCharts();
+      document.getElementById('client-view').style.display = 'none';
+      document.getElementById('roster-view').style.display = '';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // ── Snapshot card ──────────────────────────────────────────────
+    function renderSnapshot(ci) {
+      if (!ci) { document.getElementById('snapshot-card').innerHTML = '<p style="color:rgba(224,224,219,0.5)">No check-ins yet.</p>'; return; }
+
+      const sorColor  = sorToColor(ci.soreness);
+      const perfColor_ = perfColor(ci.progressTrend);
+
+      document.getElementById('snapshot-card').innerHTML = `
+        <div class="snapshot-field">
+          <label>Week ending</label>
+          <div class="value">${esc(ci.weekEnding) || '—'}</div>
+          <div class="sub">${ci.submittedAt ? formatDate(ci.submittedAt) : ''}</div>
+        </div>
+        <div class="snapshot-field">
+          <label>Overall rating</label>
+          <div class="value" style="color:${ratingToColor(ci.weekRating)}">${ci.weekRating || '—'}<span style="font-size:14px;font-weight:400;opacity:0.6"> /10</span></div>
+        </div>
+        <div class="snapshot-field">
+          <label>Performance</label>
+          <div class="value" style="color:${perfColor_};font-size:15px;">${PERF_LABELS[ci.progressTrend] || '—'}</div>
+        </div>
+        <div class="snapshot-field">
+          <label>Soreness</label>
+          <div class="value" style="color:${sorColor};font-size:15px;">${SOR_FULL[ci.soreness] || '—'}</div>
+          ${ci.sorenessNotes ? `<div class="sub">${esc(ci.sorenessNotes)}</div>` : ''}
+        </div>
+        <div class="snapshot-field">
+          <label>Nutrition</label>
+          <div class="value" style="color:${nutritionColor(ci.nutritionAdherence)}">${ci.nutritionAdherence || '—'}<span style="font-size:14px;font-weight:400;opacity:0.6"> /10</span></div>
+        </div>
+        <div class="snapshot-field">
+          <label>Best lift / perf</label>
+          <div class="value" style="font-size:14px;font-weight:600;">${esc(ci.bestLift) || '—'}</div>
+        </div>
+        ${ci.missedSessions ? `
+        <div class="snapshot-field">
+          <label>Missed sessions</label>
+          <div class="value" style="font-size:13px;font-weight:400;">${esc(ci.missedSessions)}</div>
+        </div>` : ''}
+        ${ci.forRyan ? `
+        <div class="snapshot-field" style="grid-column: 1 / -1;">
+          <label>For Ryan</label>
+          <div class="value" style="font-size:14px;font-weight:400;font-style:italic;">"${esc(ci.forRyan)}"</div>
+        </div>` : ''}
+      `;
+    }
+
+    // ── Charts ─────────────────────────────────────────────────────
+    function renderCharts(checkins) {
+      // Oldest → newest for chart x-axis
+      const sorted = [...checkins].reverse();
+      const labels = sorted.map(ci => ci.weekEnding || formatDate(ci.submittedAt));
+
+      const navyAlpha = 'rgba(37,53,81,0.12)';
+
+      const baseLineOpts = (yMin, yMax, yStep) => ({
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: { legend: { display: false }, tooltip: { callbacks: {
+          label: ctx => ctx.parsed.y
+        }}},
+        scales: {
+          x: { ticks: { font: { size: 11 }, maxRotation: 30 }, grid: { display: false } },
+          y: {
+            min: yMin, max: yMax,
+            ticks: { stepSize: yStep, font: { size: 11 } },
+            grid: { color: 'rgba(0,0,0,0.05)' }
+          }
+        }
+      });
+
+      const lineDataset = (data, color) => ({
+        data,
+        borderColor: color,
+        backgroundColor: color.replace(')', ', 0.12)').replace('rgb', 'rgba'),
+        pointBackgroundColor: color,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        tension: 0.3,
+        fill: true
+      });
+
+      destroyCharts();
+
+      chartInstances.rating = new Chart(document.getElementById('chart-rating'), {
+        type: 'line',
+        data: { labels, datasets: [ lineDataset(sorted.map(ci => ci.weekRating || null), 'rgb(37,53,81)') ] },
+        options: baseLineOpts(0, 10, 2)
+      });
+
+      chartInstances.nutrition = new Chart(document.getElementById('chart-nutrition'), {
+        type: 'line',
+        data: { labels, datasets: [ lineDataset(sorted.map(ci => ci.nutritionAdherence || null), 'rgb(200,169,110)') ] },
+        options: baseLineOpts(0, 10, 2)
+      });
+
+      chartInstances.performance = new Chart(document.getElementById('chart-performance'), {
+        type: 'line',
+        data: { labels, datasets: [ lineDataset(sorted.map(ci => ci.progressTrend || null), 'rgb(61,156,61)') ] },
+        options: {
+          ...baseLineOpts(0, 4, 1),
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: ctx => PERF_LABELS[ctx.parsed.y] || ctx.parsed.y } }
+          },
+          scales: {
+            ...baseLineOpts(0, 4, 1).scales,
+            y: {
+              min: 0, max: 4,
+              ticks: {
+                stepSize: 1,
+                font: { size: 10 },
+                callback: v => ({ 1:'↓', 2:'→', 3:'↑', 4:'↑↑' })[v] || ''
+              },
+              grid: { color: 'rgba(0,0,0,0.05)' }
+            }
+          }
+        }
+      });
+
+      chartInstances.soreness = new Chart(document.getElementById('chart-soreness'), {
+        type: 'line',
+        data: { labels, datasets: [ lineDataset(sorted.map(ci => ci.soreness || null), 'rgb(212,68,68)') ] },
+        options: {
+          ...baseLineOpts(0, 4, 1),
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: ctx => SOR_FULL[ctx.parsed.y] || ctx.parsed.y } }
+          },
+          scales: {
+            ...baseLineOpts(0, 4, 1).scales,
+            y: {
+              min: 0, max: 4,
+              ticks: {
+                stepSize: 1,
+                font: { size: 10 },
+                callback: v => ({ 1:'Clear', 2:'Minor', 3:'Tight', 4:'Pain' })[v] || ''
+              },
+              grid: { color: 'rgba(0,0,0,0.05)' }
+            }
+          }
+        }
+      });
+    }
+
+    function destroyCharts() {
+      Object.values(chartInstances).forEach(c => c.destroy());
+      chartInstances = {};
+    }
+
+    // ── Flags panel ────────────────────────────────────────────────
+    function renderFlags(checkins) {
+      const grid = document.getElementById('flags-grid');
+      grid.innerHTML = '';
+
+      // Pain alerts (soreness = 4)
+      const painEntries = checkins.filter(ci => ci.soreness === 4);
+      grid.appendChild(flagCard(
+        'Pain Alerts',
+        painEntries,
+        ci => ci.sorenessNotes || SOR_FULL[4],
+        true
+      ));
+
+      // Missed sessions
+      const missedEntries = checkins.filter(ci => ci.missedSessions && ci.missedSessions.trim());
+      grid.appendChild(flagCard('Missed Sessions', missedEntries, ci => ci.missedSessions));
+
+      // Program / exercises to review
+      const progEntries = checkins.filter(ci => ci.programFeedback && ci.programFeedback.trim());
+      grid.appendChild(flagCard('Program Feedback', progEntries, ci => ci.programFeedback));
+
+      // Nutrition flags
+      const nutrEntries = checkins.filter(ci => ci.nutritionNotes && ci.nutritionNotes.trim());
+      grid.appendChild(flagCard('Nutrition Notes', nutrEntries, ci => ci.nutritionNotes));
+
+      // For Ryan
+      const ryanEntries = checkins.filter(ci => ci.forRyan && ci.forRyan.trim());
+      grid.appendChild(flagCard('For Ryan', ryanEntries, ci => ci.forRyan));
+
+      // Best lifts / perf highlights
+      const liftEntries = checkins.filter(ci => ci.bestLift && ci.bestLift.trim());
+      grid.appendChild(flagCard('Best Lifts / Highlights', liftEntries, ci => ci.bestLift));
+    }
+
+    function flagCard(title, entries, textFn, isAlert = false) {
+      const card = document.createElement('div');
+      card.className = 'flag-card' + (isAlert && entries.length > 0 ? ' alert' : '');
+
+      const titleEl = document.createElement('div');
+      titleEl.className = 'flag-card-title';
+      titleEl.textContent = title;
+      card.appendChild(titleEl);
+
+      if (entries.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'flag-empty';
+        empty.textContent = 'Nothing to flag';
+        card.appendChild(empty);
+        return card;
+      }
+
+      entries.slice(0, 8).forEach(ci => {
+        const entry = document.createElement('div');
+        entry.className = 'flag-entry';
+
+        const week = document.createElement('div');
+        week.className = 'flag-week';
+        week.textContent = ci.weekEnding || formatDate(ci.submittedAt);
+
+        const text = document.createElement('div');
+        text.className = 'flag-text';
+        text.textContent = textFn(ci);
+
+        entry.appendChild(week);
+        entry.appendChild(text);
+        card.appendChild(entry);
+      });
+
+      return card;
+    }
+
+    // ── Colour helpers ─────────────────────────────────────────────
+    function ratingToColor(r) {
+      if (!r) return 'var(--mid-grey)';
+      if (r <= 2)  return '#E87878';
+      if (r <= 4)  return '#E8A878';
+      if (r <= 6)  return '#C8A96E';
+      if (r <= 8)  return '#78C068';
+      return '#48B078';
+    }
+
+    function perfColor(p) {
+      return { 1: 'var(--perf-1)', 2: 'var(--perf-2)', 3: 'var(--perf-3)', 4: 'var(--perf-4)' }[p] || 'var(--mid-grey)';
+    }
+
+    function sorToColor(s) {
+      return { 1: 'var(--sor-1)', 2: 'var(--sor-2)', 3: 'var(--sor-3)', 4: 'var(--sor-4)' }[s] || 'var(--mid-grey)';
+    }
+
+    function nutritionColor(n) {
+      if (!n) return 'var(--mid-grey)';
+      if (n <= 4)  return '#d44444';
+      if (n <= 6)  return '#e8902a';
+      if (n <= 8)  return '#c8a96e';
+      return '#3d9c3d';
+    }
+
+    // ── Utilities ──────────────────────────────────────────────────
+    function esc(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function formatDate(str) {
+      if (!str) return '';
+      const d = new Date(str);
+      if (isNaN(d)) return str;
+      return d.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+  </script>
+
+</body>
+</html>
