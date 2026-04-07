@@ -450,7 +450,7 @@
       padding-top: 1px;
     }
 
-    .flag-text { color: var(--navy); line-height: 1.4; }
+    .flag-text { color: var(--navy); line-height: 1.4; word-break: break-word; overflow-wrap: break-word; min-width: 0; }
 
     .flag-empty {
       font-size: 13px;
@@ -624,7 +624,7 @@
         tr.dataset.idx = idx;
         tr.addEventListener('click', () => showClient(idx));
 
-        const weekEndingDisplay = latest?.weekEnding || '—';
+        const weekEndingDisplay = formatDate(latest?.weekEnding) || '—';
         const lastDateStr = lastDate
           ? lastDate.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })
           : 'No submissions';
@@ -719,7 +719,7 @@
       document.getElementById('snapshot-card').innerHTML = `
         <div class="snapshot-field">
           <label>Week ending</label>
-          <div class="value">${esc(ci.weekEnding) || '—'}</div>
+          <div class="value">${formatDate(ci.weekEnding) || '—'}</div>
           <div class="sub">${ci.submittedAt ? formatDate(ci.submittedAt) : ''}</div>
         </div>
         <div class="snapshot-field">
@@ -760,7 +760,7 @@
     function renderCharts(checkins) {
       // Oldest → newest for chart x-axis
       const sorted = [...checkins].reverse();
-      const labels = sorted.map(ci => ci.weekEnding || formatDate(ci.submittedAt));
+      const labels = sorted.map(ci => formatDate(ci.weekEnding) || formatDate(ci.submittedAt));
 
       const navyAlpha = 'rgba(37,53,81,0.12)';
 
@@ -917,7 +917,7 @@
 
         const week = document.createElement('div');
         week.className = 'flag-week';
-        week.textContent = ci.weekEnding || formatDate(ci.submittedAt);
+        week.textContent = formatDate(ci.weekEnding) || formatDate(ci.submittedAt);
 
         const text = document.createElement('div');
         text.className = 'flag-text';
