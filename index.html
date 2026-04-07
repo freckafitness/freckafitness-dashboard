@@ -610,9 +610,103 @@
     .flag-text b, .flag-text strong { font-weight: 700; color: inherit; }
     .rte-editor i, .rte-editor em,
     .flag-text i, .flag-text em { font-style: italic; color: inherit; }
+
+    /* ── Password gate ───────────────────────────────────────────── */
+
+    .gate {
+      position: fixed;
+      inset: 0;
+      background: var(--navy);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .gate-box {
+      background: var(--off-white);
+      border-radius: 14px;
+      padding: 40px 44px;
+      width: 100%;
+      max-width: 380px;
+      text-align: center;
+    }
+
+    .gate-logo {
+      height: 36px;
+      margin-bottom: 24px;
+    }
+
+    .gate-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 6px;
+    }
+
+    .gate-sub {
+      font-size: 14px;
+      color: var(--mid-grey);
+      margin-bottom: 28px;
+    }
+
+    .gate-input {
+      width: 100%;
+      font-family: 'Halyard Display', system-ui, sans-serif;
+      font-size: 15px;
+      color: var(--navy);
+      background: #fff;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 11px 14px;
+      margin-bottom: 12px;
+      transition: border-color 0.15s;
+      text-align: center;
+      letter-spacing: 0.08em;
+    }
+
+    .gate-input:focus { outline: none; border-color: var(--accent); }
+
+    .gate-btn {
+      width: 100%;
+      font-family: 'Halyard Display', system-ui, sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      background: var(--navy);
+      color: var(--off-white);
+      border: none;
+      border-radius: 8px;
+      padding: 12px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .gate-btn:hover { background: #1a2840; }
+
+    .gate-error {
+      font-size: 13px;
+      color: var(--error);
+      margin-top: 10px;
+      min-height: 18px;
+    }
   </style>
 </head>
 <body>
+
+  <!-- Password gate — hidden once authenticated -->
+  <div class="gate" id="gate">
+    <div class="gate-box">
+      <img class="gate-logo"
+           src="https://images.squarespace-cdn.com/content/v1/644b57e54a9e990e2527d950/40f650b7-c12e-40bf-8222-9e424110d63e/frecka-010.png"
+           alt="Frecka Fitness" />
+      <div class="gate-title">Coach Dashboard</div>
+      <div class="gate-sub">Enter your password to continue</div>
+      <input class="gate-input" id="gate-input" type="password"
+             placeholder="Password" autocomplete="current-password" />
+      <button class="gate-btn" id="gate-btn">Enter</button>
+      <div class="gate-error" id="gate-error"></div>
+    </div>
+  </div>
 
   <div class="topbar">
     <img src="https://images.squarespace-cdn.com/content/v1/644b57e54a9e990e2527d950/40f650b7-c12e-40bf-8222-9e424110d63e/frecka-010.png"
@@ -705,6 +799,36 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 
   <script>
+    // ── Password gate ───────────────────────────────────────────────
+    const GATE_KEY  = 'ff_dashboard_auth';
+    const GATE_PASS = 'Frecka2026!';
+
+    (function () {
+      if (localStorage.getItem(GATE_KEY) === 'true') {
+        document.getElementById('gate').style.display = 'none';
+        return;
+      }
+
+      const input = document.getElementById('gate-input');
+      const btn   = document.getElementById('gate-btn');
+      const err   = document.getElementById('gate-error');
+
+      function attempt() {
+        if (input.value === GATE_PASS) {
+          localStorage.setItem(GATE_KEY, 'true');
+          document.getElementById('gate').style.display = 'none';
+        } else {
+          err.textContent = 'Incorrect password.';
+          input.value = '';
+          input.focus();
+        }
+      }
+
+      btn.addEventListener('click', attempt);
+      input.addEventListener('keydown', e => { if (e.key === 'Enter') attempt(); });
+      input.focus();
+    })();
+
     // ── Config ─────────────────────────────────────────────────────
     // Paste your Apps Script /exec URL here (same URL used by the checkin form)
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyUsaukOm4ZMF365CyveDJn8B1dje2jhUlStuuk2udo_WJkcjcrUBxtLc88ir3kB0Ej/exec';
