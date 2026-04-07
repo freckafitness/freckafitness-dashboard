@@ -457,6 +457,154 @@
       color: var(--mid-grey);
       font-style: italic;
     }
+
+    /* ── Check-in history ────────────────────────────────────────── */
+
+    .history-section-label {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--mid-grey);
+      margin: 32px 0 14px;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .history-row {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 20px;
+      box-shadow: 0 1px 6px rgba(37,53,81,0.05);
+    }
+
+    .history-row-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .history-week {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--navy);
+      flex-shrink: 0;
+    }
+
+    .history-stats {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      flex: 1;
+    }
+
+    .history-stat {
+      font-size: 12px;
+      color: var(--mid-grey);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .history-stat strong {
+      color: var(--navy);
+      font-weight: 700;
+    }
+
+    .coach-note-wrap {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .save-note-btn {
+      font-family: 'Halyard Display', system-ui, sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 9px 16px;
+      border-radius: 7px;
+      border: 1.5px solid var(--navy);
+      background: var(--navy);
+      color: var(--off-white);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.14s, opacity 0.14s;
+      flex-shrink: 0;
+    }
+
+    .save-note-btn:hover { background: #1a2840; }
+    .save-note-btn:disabled { opacity: 0.5; cursor: default; }
+    .save-note-btn.saved { background: #3d9c3d; border-color: #3d9c3d; }
+    .save-note-btn.error { background: var(--error); border-color: var(--error); }
+
+    /* ── Rich text editor ────────────────────────────────────────── */
+
+    .rte-wrap {
+      border: 1.5px solid var(--border);
+      border-radius: 7px;
+      overflow: hidden;
+      background: var(--warm-white);
+      transition: border-color 0.15s;
+      flex: 1;
+    }
+
+    .rte-wrap:focus-within { border-color: var(--accent); }
+
+    .rte-toolbar {
+      display: flex;
+      gap: 2px;
+      padding: 5px 8px;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .rte-btn {
+      font-family: 'Halyard Display', system-ui, sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--navy);
+      background: none;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      padding: 3px 7px;
+      cursor: pointer;
+      transition: background 0.12s, border-color 0.12s;
+      line-height: 1.4;
+    }
+
+    .rte-btn:hover { background: var(--warm-white); border-color: var(--border); }
+    .rte-btn:active { background: var(--light-grey); }
+
+    .rte-editor {
+      font-family: 'Halyard Display', system-ui, sans-serif;
+      font-size: 13px;
+      color: var(--navy);
+      padding: 10px 12px;
+      min-height: 80px;
+      outline: none;
+      line-height: 1.6;
+    }
+
+    .rte-editor:empty::before {
+      content: attr(data-placeholder);
+      color: var(--mid-grey);
+      pointer-events: none;
+    }
+
+    .rte-editor ul, .rte-editor ol {
+      padding-left: 20px;
+      margin: 4px 0;
+    }
+
+    .rte-editor b, .rte-editor strong { font-weight: 700; }
+    .rte-editor i, .rte-editor em { font-style: italic; }
   </style>
 </head>
 <body>
@@ -539,6 +687,11 @@
       <!-- Flags -->
       <div class="flags-section-label">Flags &amp; Notes</div>
       <div class="flags-grid" id="flags-grid"></div>
+
+      <!-- Check-in history with coach notes -->
+      <div class="history-section-label">Check-in History &amp; Coach Notes</div>
+      <div class="history-list" id="history-list"></div>
+
     </div>
 
   </div>
@@ -700,6 +853,7 @@
       renderSnapshot(client.checkins[0]);
       renderCharts(client.checkins);
       renderFlags(client.checkins);
+      renderHistory(client.checkins);
     }
 
     document.getElementById('back-btn').addEventListener('click', () => {
@@ -929,6 +1083,85 @@
       });
 
       return card;
+    }
+
+    // ── Check-in history + coach notes ────────────────────────────
+    function renderHistory(checkins) {
+      const list = document.getElementById('history-list');
+      list.innerHTML = '';
+
+      // Oldest → newest
+      [...checkins].reverse().forEach(ci => {
+        const row = document.createElement('div');
+        row.className = 'history-row';
+
+        const sorLabel  = { 1:'Clear', 2:'Minor', 3:'Persistent', 4:'Pain' }[ci.soreness] || '—';
+        const perfLabel = { 1:'↓ Down', 2:'→ Same', 3:'↑ Better', 4:'↑↑ Much better' }[ci.progressTrend] || '—';
+
+        row.innerHTML = `
+          <div class="history-row-header">
+            <div class="history-week">${formatDate(ci.weekEnding) || formatDate(ci.submittedAt)}</div>
+            <div class="history-stats">
+              <span class="history-stat">Rating <strong style="color:${ratingToColor(ci.weekRating)}">${ci.weekRating || '—'}/10</strong></span>
+              <span class="history-stat">Perf <strong style="color:${perfColor(ci.progressTrend)}">${perfLabel}</strong></span>
+              <span class="history-stat">Soreness <strong style="color:${sorToColor(ci.soreness)}">${sorLabel}</strong></span>
+              <span class="history-stat">Nutrition <strong style="color:${nutritionColor(ci.nutritionAdherence)}">${ci.nutritionAdherence || '—'}/10</strong></span>
+            </div>
+          </div>
+          <div class="coach-note-wrap">
+            <div class="rte-wrap">
+              <div class="rte-toolbar">
+                <button class="rte-btn" data-cmd="bold" title="Bold"><b>B</b></button>
+                <button class="rte-btn" data-cmd="italic" title="Italic"><i>I</i></button>
+                <button class="rte-btn" data-cmd="insertUnorderedList" title="Bullet list">• List</button>
+                <button class="rte-btn" data-cmd="insertOrderedList" title="Numbered list">1. List</button>
+              </div>
+              <div class="rte-editor" contenteditable="true"
+                   data-placeholder="Add coaching notes for this week…"
+                   data-row="${ci._row}">${ci.coachNotes || ''}</div>
+            </div>
+            <button class="save-note-btn" data-row="${ci._row}">Save</button>
+          </div>
+        `;
+
+        // Wire up toolbar buttons
+        row.querySelectorAll('.rte-btn').forEach(btn => {
+          btn.addEventListener('mousedown', e => {
+            e.preventDefault(); // keep focus in editor
+            document.execCommand(btn.dataset.cmd, false, null);
+          });
+        });
+
+        // Wire up save button
+        const saveBtn = row.querySelector('.save-note-btn');
+        const editor  = row.querySelector('.rte-editor');
+        saveBtn.addEventListener('click', () => postCoachNote(ci._row, editor.innerHTML, saveBtn));
+
+        list.appendChild(row);
+      });
+    }
+
+    async function postCoachNote(rowIndex, html, btn) {
+      btn.disabled = true;
+      btn.textContent = 'Saving…';
+      btn.classList.remove('saved', 'error');
+      try {
+        await fetch(SCRIPT_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'coachNote', rowIndex, note: html })
+        });
+        btn.textContent = '✓ Saved';
+        btn.classList.add('saved');
+        setTimeout(() => {
+          btn.textContent = 'Save';
+          btn.classList.remove('saved');
+          btn.disabled = false;
+        }, 2500);
+      } catch (err) {
+        btn.textContent = 'Error — retry';
+        btn.classList.add('error');
+        btn.disabled = false;
+      }
     }
 
     // ── Colour helpers ─────────────────────────────────────────────
