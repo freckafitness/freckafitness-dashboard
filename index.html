@@ -907,6 +907,11 @@
           <label>For Ryan</label>
           <div class="value" style="font-size:14px;font-weight:400;font-style:italic;">"${esc(ci.forRyan)}"</div>
         </div>` : ''}
+        ${ci.coachNotes ? `
+        <div class="snapshot-field" style="grid-column: 1 / -1;">
+          <label>Coach Notes${ci.coachNotesDate ? ' · ' + esc(ci.coachNotesDate) : ''}</label>
+          <div style="font-size:13px;font-weight:400;line-height:1.6;color:var(--off-white);">${ci.coachNotes}</div>
+        </div>` : ''}
       `;
     }
 
@@ -1046,6 +1051,10 @@
       // Best lifts / perf highlights
       const liftEntries = checkins.filter(ci => ci.bestLift && ci.bestLift.trim());
       grid.appendChild(flagCard('Best Lifts / Highlights', liftEntries, ci => ci.bestLift));
+
+      // Coach notes
+      const noteEntries = checkins.filter(ci => ci.coachNotes && ci.coachNotes.trim());
+      grid.appendChild(coachNotesCard(noteEntries));
     }
 
     function flagCard(title, entries, textFn, isAlert = false) {
@@ -1085,6 +1094,46 @@
       return card;
     }
 
+    function coachNotesCard(entries) {
+      const card = document.createElement('div');
+      card.className = 'flag-card';
+
+      const titleEl = document.createElement('div');
+      titleEl.className = 'flag-card-title';
+      titleEl.textContent = 'Coach Notes';
+      card.appendChild(titleEl);
+
+      if (entries.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'flag-empty';
+        empty.textContent = 'No notes added yet';
+        card.appendChild(empty);
+        return card;
+      }
+
+      entries.forEach(ci => {
+        const entry = document.createElement('div');
+        entry.className = 'flag-entry';
+        entry.style.flexDirection = 'column';
+        entry.style.gap = '6px';
+
+        const meta = document.createElement('div');
+        meta.style.cssText = 'font-size:11px;color:var(--mid-grey);';
+        meta.textContent = (formatDate(ci.weekEnding) || formatDate(ci.submittedAt))
+          + (ci.coachNotesDate ? ' · saved ' + ci.coachNotesDate : '');
+
+        const body = document.createElement('div');
+        body.className = 'flag-text';
+        body.innerHTML = ci.coachNotes; // rendered HTML
+
+        entry.appendChild(meta);
+        entry.appendChild(body);
+        card.appendChild(entry);
+      });
+
+      return card;
+    }
+
     // ── Check-in history + coach notes ────────────────────────────
     function renderHistory(checkins) {
       const list = document.getElementById('history-list');
@@ -1100,7 +1149,10 @@
 
         row.innerHTML = `
           <div class="history-row-header">
-            <div class="history-week">${formatDate(ci.weekEnding) || formatDate(ci.submittedAt)}</div>
+            <div>
+              <div class="history-week">${formatDate(ci.weekEnding) || formatDate(ci.submittedAt)}</div>
+              ${ci.coachNotesDate ? `<div style="font-size:11px;color:var(--mid-grey);margin-top:2px;">Note saved ${esc(ci.coachNotesDate)}</div>` : ''}
+            </div>
             <div class="history-stats">
               <span class="history-stat">Rating <strong style="color:${ratingToColor(ci.weekRating)}">${ci.weekRating || '—'}/10</strong></span>
               <span class="history-stat">Perf <strong style="color:${perfColor(ci.progressTrend)}">${perfLabel}</strong></span>
