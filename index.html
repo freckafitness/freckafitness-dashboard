@@ -1163,23 +1163,23 @@
       ));
 
       // Missed sessions
-      const missedEntries = checkins.filter(ci => ci.missedSessions && ci.missedSessions.trim());
+      const missedEntries = checkins.filter(ci => ci.missedSessions && String(ci.missedSessions).trim());
       grid.appendChild(flagCard('Missed Sessions', missedEntries, ci => ci.missedSessions));
 
       // Program / exercises to review
-      const progEntries = checkins.filter(ci => ci.programFeedback && ci.programFeedback.trim());
+      const progEntries = checkins.filter(ci => ci.programFeedback && String(ci.programFeedback).trim());
       grid.appendChild(flagCard('Program Feedback', progEntries, ci => ci.programFeedback));
 
       // Nutrition flags
-      const nutrEntries = checkins.filter(ci => ci.nutritionNotes && ci.nutritionNotes.trim());
+      const nutrEntries = checkins.filter(ci => ci.nutritionNotes && String(ci.nutritionNotes).trim());
       grid.appendChild(flagCard('Nutrition Notes', nutrEntries, ci => ci.nutritionNotes));
 
       // For Ryan
-      const ryanEntries = checkins.filter(ci => ci.forRyan && ci.forRyan.trim());
+      const ryanEntries = checkins.filter(ci => ci.forRyan && String(ci.forRyan).trim());
       grid.appendChild(flagCard('For Ryan', ryanEntries, ci => ci.forRyan));
 
       // Best lifts / perf highlights
-      const liftEntries = checkins.filter(ci => ci.bestLift && ci.bestLift.trim());
+      const liftEntries = checkins.filter(ci => ci.bestLift && String(ci.bestLift).trim());
       grid.appendChild(flagCard('Best Lifts / Highlights', liftEntries, ci => ci.bestLift));
 
       // Coach notes
