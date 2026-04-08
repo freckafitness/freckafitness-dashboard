@@ -1041,7 +1041,7 @@
         <div class="snapshot-field">
           <label>Week ending</label>
           <div class="value">${formatDate(ci.weekEnding) || '—'}</div>
-          <div class="sub">${ci.submittedAt ? formatDate(ci.submittedAt) : ''}</div>
+          <div class="sub">${ci.submittedAt ? formatDateTime(ci.submittedAt) : ''}</div>
         </div>
         <div class="snapshot-field">
           <label>Overall rating</label>
@@ -1076,7 +1076,7 @@
         </div>` : ''}
         ${ci.coachNotes ? `
         <div class="snapshot-field" style="grid-column: 1 / -1;">
-          <label>Coach Notes${ci.coachNotesDate ? ' · ' + esc(ci.coachNotesDate) : ''}</label>
+          <label>Coach Notes${ci.coachNotesDate ? ' · ' + formatDateTime(ci.coachNotesDate) : ''}</label>
           <div style="font-size:13px;font-weight:400;line-height:1.6;color:var(--off-white);">${ci.coachNotes}</div>
         </div>` : ''}
       `;
@@ -1290,7 +1290,7 @@
         const meta = document.createElement('div');
         meta.style.cssText = 'font-size:11px;color:var(--mid-grey);font-weight:600;';
         meta.textContent = (formatDate(ci.weekEnding) || formatDate(ci.submittedAt))
-          + (ci.coachNotesDate ? ' · saved ' + ci.coachNotesDate : '');
+          + (ci.coachNotesDate ? ' · saved ' + formatDateTime(ci.coachNotesDate) : '');
 
         const body = document.createElement('div');
         body.className = 'flag-text';
@@ -1350,7 +1350,7 @@
         const sorLabel  = { 1:'Nothing to Flag (1)', 2:'Minor Soreness (2)', 3:'Persistent / Tightness (3)', 4:'Pain (4)' }[ci.soreness] || '—';
         const perfLabel = { 1:'↓ Down', 2:'→ Same', 3:'↑ Better', 4:'↑↑ Much better' }[ci.progressTrend] || '—';
 
-        meta.textContent = ci.coachNotesDate ? `Note last saved ${ci.coachNotesDate}` : 'No note saved yet';
+        meta.textContent = ci.coachNotesDate ? `Note last saved ${formatDateTime(ci.coachNotesDate)}` : 'No note saved yet';
 
         stats.innerHTML = `
           <span class="history-stat">Rating <strong style="color:${ratingToColor(ci.weekRating)}">${ci.weekRating || '—'}/10</strong></span>
@@ -1438,6 +1438,25 @@
       const d = new Date(str);
       if (isNaN(d)) return str;
       return d.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    function formatDateTime(str) {
+      if (!str) return '';
+      const d = new Date(str);
+      if (isNaN(d)) {
+        // Raw string from sheet — strip seconds and convert 12h to 24h
+        return str
+          .replace(',', '')
+          .replace(/(\d+):(\d+):\d+\s*(a\.m\.|p\.m\.)/gi, (_, h, m, period) => {
+            let hr = parseInt(h, 10);
+            if (/p\.m\./i.test(period) && hr !== 12) hr += 12;
+            if (/a\.m\./i.test(period) && hr === 12) hr = 0;
+            return `${String(hr).padStart(2, '0')}:${m}`;
+          });
+      }
+      const datePart = d.toLocaleDateString('en-CA');
+      const timePart = d.toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit', hour12: false });
+      return `${datePart} ${timePart}`;
     }
   </script>
 
