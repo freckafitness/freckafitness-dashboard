@@ -883,18 +883,18 @@
 
     const SOR_LABELS = {
       0: '—',
-      1: 'Clear',
-      2: 'Minor',
-      3: 'Persistent',
-      4: 'Pain'
+      1: 'Clear (1)',
+      2: 'Minor (2)',
+      3: 'Persistent (3)',
+      4: 'Pain (4)'
     };
 
     const SOR_FULL = {
       0: '—',
-      1: 'Nothing to Flag',
-      2: 'Minor Soreness',
-      3: 'Persistent Soreness / Tightness',
-      4: 'Pain — Needs Attention'
+      1: 'Nothing to Flag (1)',
+      2: 'Minor Soreness (2)',
+      3: 'Persistent Soreness / Tightness (3)',
+      4: 'Pain — Needs Attention (4)'
     };
 
     // ── State ──────────────────────────────────────────────────────
@@ -1329,7 +1329,7 @@
       const sorted = [...checkins].sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
 
       sorted.forEach((ci, i) => {
-        const sorLabel  = { 1:'Clear', 2:'Minor', 3:'Persistent', 4:'Pain' }[ci.soreness] || '—';
+        const sorLabel  = { 1:'Nothing to Flag (1)', 2:'Minor Soreness (2)', 3:'Persistent / Tightness (3)', 4:'Pain (4)' }[ci.soreness] || '—';
         const perfLabel = { 1:'↓ Down', 2:'→ Same', 3:'↑ Better', 4:'↑↑ Much better' }[ci.progressTrend] || '—';
         const weekLabel = formatDate(ci.weekEnding) || formatDate(ci.submittedAt);
         const noteFlag  = ci.coachNotes ? ' ✓' : '';
@@ -1347,7 +1347,7 @@
         if (idx === '') { card.style.display = 'none'; return; }
 
         const ci = sorted[idx];
-        const sorLabel  = { 1:'Clear', 2:'Minor', 3:'Persistent', 4:'Pain' }[ci.soreness] || '—';
+        const sorLabel  = { 1:'Nothing to Flag (1)', 2:'Minor Soreness (2)', 3:'Persistent / Tightness (3)', 4:'Pain (4)' }[ci.soreness] || '—';
         const perfLabel = { 1:'↓ Down', 2:'→ Same', 3:'↑ Better', 4:'↑↑ Much better' }[ci.progressTrend] || '—';
 
         meta.textContent = ci.coachNotesDate ? `Note last saved ${ci.coachNotesDate}` : 'No note saved yet';
