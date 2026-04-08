@@ -1264,6 +1264,7 @@
     function coachNotesCard(entries) {
       const card = document.createElement('div');
       card.className = 'flag-card';
+      card.style.gridColumn = '1 / -1'; // always full width
 
       const titleEl = document.createElement('div');
       titleEl.className = 'flag-card-title';
@@ -1278,24 +1279,26 @@
         return card;
       }
 
+      const notesGrid = document.createElement('div');
+      notesGrid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;';
+      card.appendChild(notesGrid);
+
       entries.forEach(ci => {
         const entry = document.createElement('div');
-        entry.className = 'flag-entry';
-        entry.style.flexDirection = 'column';
-        entry.style.gap = '6px';
+        entry.style.cssText = 'display:flex;flex-direction:column;gap:6px;padding:10px 12px;background:var(--light-bg);border-radius:8px;';
 
         const meta = document.createElement('div');
-        meta.style.cssText = 'font-size:11px;color:var(--mid-grey);';
+        meta.style.cssText = 'font-size:11px;color:var(--mid-grey);font-weight:600;';
         meta.textContent = (formatDate(ci.weekEnding) || formatDate(ci.submittedAt))
           + (ci.coachNotesDate ? ' · saved ' + ci.coachNotesDate : '');
 
         const body = document.createElement('div');
         body.className = 'flag-text';
-        body.innerHTML = ci.coachNotes; // rendered HTML
+        body.innerHTML = ci.coachNotes;
 
         entry.appendChild(meta);
         entry.appendChild(body);
-        card.appendChild(entry);
+        notesGrid.appendChild(entry);
       });
 
       return card;
